@@ -105,7 +105,6 @@ CREATE INDEX idx_cart_items_cart ON CartItems(cart_id);
 
 1. **Order Related**
    - Order has many OrderItems
-   - Order belongs to Address
 
 2. **Cart Related**
    - Cart has many CartItems
@@ -114,4 +113,3 @@ CREATE INDEX idx_cart_items_cart ON CartItems(cart_id);
 3. **Pizza Related**
    - Pizza has many OrderItems
    - Pizza has many CartItems
-   - Pizza has one Stock count
