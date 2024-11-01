@@ -1,0 +1,4 @@
+This is a Nest.js project that is an API for a pizza ordering app.
+It uses TypeORM to connect to a Postgres database.
+And exposes a REST API for the frontend to use.
+Follow the common best practices for a Typescript and Nest.js project.
