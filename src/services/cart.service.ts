@@ -47,6 +47,11 @@ export class CartService {
   }
 
   async addItem(cartId: string, itemData: CartItemDto) {
+    const cart = await this.cartRepository.findOne({ where: { id: cartId } });
+    if (!cart) {
+      throw new NotFoundException('Cart not found');
+    }
+
     const pizza = await this.pizzaRepository.findOne({
       where: { id: itemData.pizzaId },
     });
@@ -60,9 +65,9 @@ export class CartService {
     }
 
     const cartItem = this.cartItemRepository.create({
-      cartId,
-      pizzaId: itemData.pizzaId,
-      sizeId: itemData.sizeId,
+      cart,
+      pizza,
+      size: { id: itemData.sizeId },
       quantity: itemData.quantity,
     });
 
@@ -72,8 +77,8 @@ export class CartService {
     if (itemData.toppings?.length) {
       const toppingEntities = itemData.toppings.map((toppingId) =>
         this.cartItemToppingRepository.create({
-          cartItemId: cartItem.id,
-          toppingId,
+          cartItem,
+          topping: { id: toppingId },
         }),
       );
       await this.cartItemToppingRepository.save(toppingEntities);
@@ -84,7 +89,7 @@ export class CartService {
 
   async updateItemQuantity(cartId: string, itemId: string, quantity: number) {
     const cartItem = await this.cartItemRepository.findOne({
-      where: { id: itemId, cartId },
+      where: { id: itemId, cart: { id: cartId } },
       relations: ['pizza'],
     });
 
@@ -101,20 +106,23 @@ export class CartService {
   }
 
   async removeItem(cartId: string, itemId: string) {
-    const result = await this.cartItemRepository.delete({
-      id: itemId,
-      cartId,
+    const cartItem = await this.cartItemRepository.findOne({
+      where: { id: itemId, cart: { id: cartId } },
     });
 
-    if (!result.affected) {
+    if (!cartItem) {
       throw new NotFoundException('Cart item not found');
     }
 
+    await this.cartItemRepository.remove(cartItem);
     return this.getCart(cartId);
   }
 
   async clearCart(cartId: string) {
-    await this.cartItemRepository.delete({ cartId });
+    const items = await this.cartItemRepository.find({
+      where: { cart: { id: cartId } },
+    });
+    await this.cartItemRepository.remove(items);
     return { success: true };
   }
 }

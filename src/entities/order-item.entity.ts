@@ -16,15 +16,6 @@ export class OrderItem {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ type: 'uuid', nullable: false })
-  orderId: string;
-
-  @Column({ type: 'uuid', nullable: false })
-  pizzaId: string;
-
-  @Column({ type: 'uuid', nullable: false })
-  sizeId: string;
-
   @Column({ type: 'integer', nullable: false })
   quantity: number;
 

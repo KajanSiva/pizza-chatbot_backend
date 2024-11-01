@@ -17,9 +17,6 @@ export class Order {
   @Column({ type: 'varchar', nullable: false })
   clientName: string;
 
-  @Column({ type: 'uuid', nullable: false })
-  addressId: string;
-
   @Column({ type: 'varchar', nullable: false })
   status: string;
 

@@ -52,7 +52,7 @@ export class OrderService {
     // Create order
     const order = this.orderRepository.create({
       clientName: data.clientName,
-      addressId: address.id,
+      address,
       status: 'pending',
       totalAmount,
     });
@@ -62,9 +62,9 @@ export class OrderService {
     // Create order items
     for (const cartItem of cart.items) {
       const orderItem = this.orderItemRepository.create({
-        orderId: order.id,
-        pizzaId: cartItem.pizzaId,
-        sizeId: cartItem.sizeId,
+        order,
+        pizza: cartItem.pizza,
+        size: cartItem.size,
         quantity: cartItem.quantity,
         unitPrice: cartItem.pizza.price,
       });
@@ -72,17 +72,17 @@ export class OrderService {
       await this.orderItemRepository.save(orderItem);
 
       // Create order item toppings
-      const toppingEntities = cartItem.toppings.map((topping) =>
+      const toppingEntities = cartItem.toppings.map((cartItemTopping) =>
         this.orderItemToppingRepository.create({
-          orderItemId: orderItem.id,
-          toppingId: topping.toppingId,
+          orderItem,
+          topping: cartItemTopping.topping,
         }),
       );
 
       await this.orderItemToppingRepository.save(toppingEntities);
 
       // Update pizza stock
-      await this.pizzaRepository.update(cartItem.pizzaId, {
+      await this.pizzaRepository.update(cartItem.pizza.id, {
         stock: () => `stock - ${cartItem.quantity}`,
       });
     }
@@ -152,7 +152,7 @@ export class OrderService {
 
     // Return stock
     for (const item of order.items) {
-      await this.pizzaRepository.update(item.pizzaId, {
+      await this.pizzaRepository.update(item.pizza.id, {
         stock: () => `stock + ${item.quantity}`,
       });
     }

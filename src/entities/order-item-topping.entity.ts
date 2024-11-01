@@ -1,7 +1,6 @@
 import {
   Entity,
   PrimaryGeneratedColumn,
-  Column,
   ManyToOne,
   JoinColumn,
 } from 'typeorm';
@@ -12,12 +11,6 @@ import { PizzaTopping } from './pizza-topping.entity';
 export class OrderItemTopping {
   @PrimaryGeneratedColumn('uuid')
   id: string;
-
-  @Column({ type: 'uuid', nullable: false })
-  orderItemId: string;
-
-  @Column({ type: 'uuid', nullable: false })
-  toppingId: string;
 
   @ManyToOne(() => OrderItem, (orderItem) => orderItem.toppings)
   @JoinColumn({ name: 'order_item_id' })
