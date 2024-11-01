@@ -1,9 +1,25 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import databaseConfig from './config/database.config';
+import { PizzaController, ToppingController, SizeController } from './controllers/pizza.controller';
+import { CartController } from './controllers/cart.controller';
+import { OrderController } from './controllers/order.controller';
+import { PizzaService } from './services/pizza.service';
+import { CartService } from './services/cart.service';
+import { OrderService } from './services/order.service';
+import {
+  Pizza,
+  PizzaTopping,
+  Size,
+  Cart,
+  CartItem,
+  CartItemTopping,
+  Order,
+  OrderItem,
+  OrderItemTopping,
+  Address,
+} from './entities';
 
 @Module({
   imports: [
@@ -27,8 +43,26 @@ import databaseConfig from './config/database.config';
       }),
       inject: [ConfigService],
     }),
+    TypeOrmModule.forFeature([
+      Pizza,
+      PizzaTopping,
+      Size,
+      Cart,
+      CartItem,
+      CartItemTopping,
+      Order,
+      OrderItem,
+      OrderItemTopping,
+      Address,
+    ]),
   ],
-  controllers: [AppController],
-  providers: [AppService],
+  controllers: [
+    PizzaController,
+    ToppingController,
+    SizeController,
+    CartController,
+    OrderController,
+  ],
+  providers: [PizzaService, CartService, OrderService],
 })
 export class AppModule {}
