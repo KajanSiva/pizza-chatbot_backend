@@ -59,7 +59,6 @@ POST /api/orders
       number,
       complement,
       city,
-      state,
       postalCode
     }
   }

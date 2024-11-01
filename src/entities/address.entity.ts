@@ -19,9 +19,6 @@ export class Address {
   city: string;
 
   @Column({ type: 'varchar', nullable: false })
-  state: string;
-
-  @Column({ type: 'varchar', nullable: false })
   postalCode: string;
 
   @OneToMany(() => Order, (order) => order.address)
