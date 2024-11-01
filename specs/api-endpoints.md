@@ -3,7 +3,7 @@
 ## Pizza Menu
 ```
 GET /api/pizzas
-  - List all active pizzas
+  - List all pizzas
   Query params: 
     - inStock (boolean)
     - sortBy (name, price)
@@ -20,10 +20,14 @@ GET /api/sizes
 
 ## Cart Management
 ```
-GET /api/cart
-  - Get current user's cart with items
+GET /api/carts/:cartId
+  - Get cart with items
 
-POST /api/cart/items
+POST /api/carts
+  - Create a new cart
+  - Returns: { cartId }
+
+POST /api/carts/:cartId/items
   - Add item to cart
   Body: {
     pizzaId,
@@ -32,14 +36,14 @@ POST /api/cart/items
     toppings: [toppingId]
   }
 
-PUT /api/cart/items/:itemId
+PUT /api/carts/:cartId/items/:itemId
   - Update cart item quantity
   Body: { quantity }
 
-DELETE /api/cart/items/:itemId
+DELETE /api/carts/:cartId/items/:itemId
   - Remove item from cart
 
-DELETE /api/cart
+DELETE /api/carts/:cartId
   - Clear entire cart
 ```
 
@@ -47,7 +51,18 @@ DELETE /api/cart
 ```
 POST /api/orders
   - Create order from cart
-  Body: { address }
+  Body: {
+    cartId,
+    clientName,
+    address: {
+      street,
+      number,
+      complement,
+      city,
+      state,
+      postalCode
+    }
+  }
 
 GET /api/orders/:id
   - Get single order details
