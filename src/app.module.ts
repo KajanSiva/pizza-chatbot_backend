@@ -2,7 +2,11 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import databaseConfig from './config/database.config';
-import { PizzaController, ToppingController, SizeController } from './controllers/pizza.controller';
+import {
+  PizzaController,
+  ToppingController,
+  SizeController,
+} from './controllers/pizza.controller';
 import { CartController } from './controllers/cart.controller';
 import { OrderController } from './controllers/order.controller';
 import { PizzaService } from './services/pizza.service';
@@ -20,12 +24,15 @@ import {
   OrderItemTopping,
   Address,
 } from './entities';
+import { ChatController } from './controllers/chat.controller';
+import { ChatService } from './services/chat.service';
+import aiConfig from './config/ai.config';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [databaseConfig],
+      load: [databaseConfig, aiConfig],
       envFilePath: '.env',
     }),
     TypeOrmModule.forRootAsync({
@@ -62,7 +69,8 @@ import {
     SizeController,
     CartController,
     OrderController,
+    ChatController,
   ],
-  providers: [PizzaService, CartService, OrderService],
+  providers: [PizzaService, CartService, OrderService, ChatService],
 })
 export class AppModule {}
