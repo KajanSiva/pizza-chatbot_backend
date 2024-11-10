@@ -24,15 +24,12 @@ import {
   OrderItemTopping,
   Address,
 } from './entities';
-import { ChatController } from './controllers/chat.controller';
-import { ChatService } from './services/chat.service';
-import aiConfig from './config/ai.config';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [databaseConfig, aiConfig],
+      load: [databaseConfig],
       envFilePath: '.env',
     }),
     TypeOrmModule.forRootAsync({
@@ -69,8 +66,7 @@ import aiConfig from './config/ai.config';
     SizeController,
     CartController,
     OrderController,
-    ChatController,
   ],
-  providers: [PizzaService, CartService, OrderService, ChatService],
+  providers: [PizzaService, CartService, OrderService],
 })
 export class AppModule {}

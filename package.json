@@ -23,7 +23,11 @@
     "migration:generate": "npm run typeorm -- -d src/config/typeorm.config.ts migration:generate",
     "migration:run": "npm run typeorm -- -d src/config/typeorm.config.ts migration:run",
     "migration:revert": "npm run typeorm -- -d src/config/typeorm.config.ts migration:revert",
-    "seed": "ts-node src/database/seeders/seed.ts"
+    "seed": "ts-node src/database/seeders/seed.ts",
+    "start:api": "nest start",
+    "start:chat": "nest start --config nest-cli.chat.json",
+    "start:api:dev": "nest start --watch",
+    "start:chat:dev": "nest start --watch --config nest-cli.chat.json"
   },
   "dependencies": {
     "@langchain/openai": "^0.3.12",
