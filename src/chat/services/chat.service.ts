@@ -51,8 +51,72 @@ export class ChatService {
     },
   );
 
+  private getPizzaByIdTool = tool(
+    async ({ id }) => {
+      try {
+        const response = await firstValueFrom(
+          this.httpService.get(`/api/pizzas/${id}`),
+        );
+        return JSON.stringify(response.data);
+      } catch (error) {
+        throw new Error(`Error fetching pizza details: ${error.message}`);
+      }
+    },
+    {
+      name: 'getPizzaById',
+      description:
+        'Gets details of a specific pizza by its ID. Use when the user asks about a specific pizza.',
+      schema: z.object({
+        id: z.number().or(z.string()),
+      }),
+    },
+  );
+
+  private getToppingsTool = tool(
+    async () => {
+      try {
+        const response = await firstValueFrom(
+          this.httpService.get('/api/toppings'),
+        );
+        return JSON.stringify(response.data);
+      } catch (error) {
+        throw new Error(`Error fetching toppings: ${error.message}`);
+      }
+    },
+    {
+      name: 'getToppings',
+      description:
+        'Gets list of available pizza toppings. Use when the user asks about available toppings or customization options.',
+      schema: z.object({}),
+    },
+  );
+
+  private getSizesTool = tool(
+    async () => {
+      try {
+        const response = await firstValueFrom(
+          this.httpService.get('/api/sizes'),
+        );
+        return JSON.stringify(response.data);
+      } catch (error) {
+        throw new Error(`Error fetching pizza sizes: ${error.message}`);
+      }
+    },
+    {
+      name: 'getSizes',
+      description:
+        'Gets available pizza sizes. Use when the user asks about available sizes or size options.',
+      schema: z.object({}),
+    },
+  );
+
   async onModuleInit() {
-    const tools = [this.getPizzasTool];
+    const tools = [
+      this.getPizzasTool,
+      this.getPizzaByIdTool,
+      this.getToppingsTool,
+      this.getSizesTool,
+    ];
 
     const prompt = ChatPromptTemplate.fromMessages([
       [
