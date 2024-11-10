@@ -1,4 +1,4 @@
-import { Controller, Post, Body } from '@nestjs/common';
+import { Controller, Post, Body, BadRequestException } from '@nestjs/common';
 import { ChatRequestDto } from '../dtos/chat.dto';
 import { ChatService } from '../services/chat.service';
 
@@ -8,6 +8,9 @@ export class ChatController {
 
   @Post()
   async process(@Body() chatRequest: ChatRequestDto) {
+    if (!chatRequest.sessionId) {
+      throw new BadRequestException('sessionId is required');
+    }
     return this.chatService.process(chatRequest);
   }
 }
