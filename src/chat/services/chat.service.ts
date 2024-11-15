@@ -221,7 +221,7 @@ export class ChatService {
     async ({ cartId, itemId, quantity }) => {
       try {
         const response = await firstValueFrom(
-          this.httpService.patch(`/api/carts/${cartId}/items/${itemId}`, {
+          this.httpService.put(`/api/carts/${cartId}/items/${itemId}`, {
             quantity,
           }),
         );
@@ -232,11 +232,15 @@ export class ChatService {
     },
     {
       name: 'updateCartItemQuantity',
-      description:
-        'Updates the quantity of an item in the cart. Use when user wants to change the quantity of a pizza.',
+      description: `Updates the quantity of an item in the cart. Use when user wants to change the quantity of a pizza.
+      IMPORTANT: Before using this tool:
+      1. First use getCart to fetch the current cart contents
+      2. Find the specific pizza item in the cart items array
+      3. Extract that item's UUID from the cart item
+      4. Use that UUID as the itemId parameter`,
       schema: z.object({
         cartId: z.string(),
-        itemId: z.string(),
+        itemId: z.string().uuid(),
         quantity: z.number().min(0),
       }),
     },
@@ -255,11 +259,14 @@ export class ChatService {
     },
     {
       name: 'removeCartItem',
-      description:
-        'Removes an item from the cart. Use when user wants to remove a specific pizza from their order.',
+      description: `Removes an item from the cart. Use when user wants to remove a specific pizza from their order.
+      IMPORTANT: Before using this tool:
+      1. First use getCart to fetch the current cart contents
+      2. Find the item's UUID from the cart items array
+      3. Use that UUID as the itemId parameter`,
       schema: z.object({
         cartId: z.string(),
-        itemId: z.string(),
+        itemId: z.string().uuid(),
       }),
     },
   );
