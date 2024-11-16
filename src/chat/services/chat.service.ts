@@ -12,6 +12,7 @@ import { AgentExecutor, createToolCallingAgent } from 'langchain/agents';
 import { firstValueFrom } from 'rxjs';
 import { z } from 'zod';
 import { tool } from '@langchain/core/tools';
+import { CreateOrderDto } from '../../dtos/order.dto';
 
 @Injectable()
 export class ChatService {
@@ -292,6 +293,154 @@ export class ChatService {
     },
   );
 
+  private createOrderTool = tool(
+    async ({ cartId, clientName, address }) => {
+      try {
+        const orderData: CreateOrderDto = {
+          cartId,
+          clientName,
+          address: {
+            street: address.street,
+            number: address.number,
+            complement: address.complement,
+            city: address.city,
+            postalCode: address.postalCode,
+          },
+        };
+
+        const response = await firstValueFrom(
+          this.httpService.post('/api/orders', orderData),
+        );
+
+        return JSON.stringify({
+          success: true,
+          message: 'Order created successfully',
+          data: response.data,
+        });
+      } catch (error) {
+        let errorMessage =
+          'An unexpected error occurred while creating the order.';
+
+        if (error.response) {
+          switch (error.response.status) {
+            case 400:
+              errorMessage =
+                error.response.data.message || 'Cart not found or is empty.';
+              break;
+          }
+        }
+
+        return JSON.stringify({
+          success: false,
+          error: errorMessage,
+          details: error.response?.data?.message || error.message,
+        });
+      }
+    },
+    {
+      name: 'createOrder',
+      description: `Creates a new order from the current cart contents. 
+      IMPORTANT: 
+      1. Verify cart has items using getCart before creating order
+      2. Ensure all address fields are properly formatted
+      3. Cart will be cleared after successful order creation
+      4. Check response's 'success' field and handle errors appropriately`,
+      schema: z.object({
+        cartId: z.string(),
+        clientName: z.string().min(2).max(100),
+        address: z.object({
+          street: z.string().min(3).max(100),
+          number: z.string().max(10),
+          complement: z.string().max(100).optional(),
+          city: z.string().min(2).max(100),
+          postalCode: z.string(),
+        }),
+      }),
+    },
+  );
+
+  private getOrderTool = tool(
+    async ({ orderId }) => {
+      try {
+        const response = await firstValueFrom(
+          this.httpService.get(`/api/orders/${orderId}`),
+        );
+        return JSON.stringify({
+          success: true,
+          data: response.data,
+        });
+      } catch (error) {
+        let errorMessage =
+          'An unexpected error occurred while fetching the order.';
+
+        if (error.response?.status === 404) {
+          errorMessage = 'Order not found.';
+        }
+
+        return JSON.stringify({
+          success: false,
+          error: errorMessage,
+          details: error.response?.data?.message || error.message,
+        });
+      }
+    },
+    {
+      name: 'getOrder',
+      description:
+        'Gets details of a specific order by its ID. Use when user asks about their order status or details.',
+      schema: z.object({
+        orderId: z.string(),
+      }),
+    },
+  );
+
+  private cancelOrderTool = tool(
+    async ({ orderId }) => {
+      try {
+        const response = await firstValueFrom(
+          this.httpService.put(`/api/orders/${orderId}/cancel`),
+        );
+        return JSON.stringify({
+          success: true,
+          message: 'Order cancelled successfully',
+          data: response.data,
+        });
+      } catch (error) {
+        let errorMessage =
+          'An unexpected error occurred while cancelling the order.';
+
+        if (error.response) {
+          switch (error.response.status) {
+            case 400:
+              errorMessage =
+                'Order cannot be cancelled (may not be in pending status).';
+              break;
+            case 404:
+              errorMessage = 'Order not found.';
+              break;
+          }
+        }
+
+        return JSON.stringify({
+          success: false,
+          error: errorMessage,
+          details: error.response?.data?.message || error.message,
+        });
+      }
+    },
+    {
+      name: 'cancelOrder',
+      description: `Cancels an existing order. 
+      IMPORTANT:
+      1. Only pending orders can be cancelled
+      2. Check response's 'success' field
+      3. If cancellation fails, explain the reason to the user`,
+      schema: z.object({
+        orderId: z.string(),
+      }),
+    },
+  );
+
   private setCartId(sessionId: string, cartId: string): void {
     console.log(`Setting cartId ${cartId} for session ${sessionId}`);
     this.cartSessions.set(sessionId, cartId);
@@ -315,6 +464,9 @@ export class ChatService {
       this.updateCartItemQuantityTool,
       this.removeCartItemTool,
       this.clearCartTool,
+      this.createOrderTool,
+      this.getOrderTool,
+      this.cancelOrderTool,
     ];
 
     const prompt = ChatPromptTemplate.fromMessages([
