@@ -350,7 +350,12 @@ export class ChatService {
       description: `Creates a new order from the current cart contents. 
       IMPORTANT: 
       1. Verify cart has items using getCart before creating order
-      2. Ensure all address fields are properly formatted
+      2. Address must be provided with all required fields:
+         - street: the street name without the number
+         - number: the street number
+         - city: the city name
+         - postalCode: in format 12345 or 12345-6789
+         - complement: optional additional address info
       3. Cart will be cleared after successful order creation
       4. Check response's 'success' field and handle errors appropriately`,
       schema: z.object({
@@ -361,7 +366,7 @@ export class ChatService {
           number: z.string().max(10),
           complement: z.string().max(100).optional(),
           city: z.string().min(2).max(100),
-          postalCode: z.string(),
+          postalCode: z.string().regex(/^\d{5}(-\d{4})?$/),
         }),
       }),
     },
@@ -518,6 +523,22 @@ export class ChatService {
            - If an error occurs, explain the issue to the user and suggest solutions
            - Suggest alternatives or next steps when errors occur
            - Be empathetic when explaining errors
+        7. Address handling:
+           - When collecting delivery address:
+             a. If user provides a full address like "123 Main Street, New York, 12345":
+                - Extract street number (123) and name (Main Street) separately
+                - Identify city and postal code
+             b. If information is incomplete, ask for missing details one at a time:
+                - Street number and name (if not clearly separated)
+                - City (if missing)
+                - Postal code (if missing or in wrong format)
+           - Ensure postal code is in format: 12345 or 12345-6789
+           - Before creating order, confirm all address components are correct
+           - Example of complete address structure:
+             street: "Main Street"
+             number: "123"
+             city: "New York"
+             postalCode: "12345"
         
         Current cart ID: {cartId}
         Available order IDs: {orderIds}`,
