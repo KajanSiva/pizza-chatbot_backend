@@ -19,8 +19,10 @@ export class ChatService {
   private chatModel: ChatOpenAI;
   private messageHistories: Map<string, InMemoryChatMessageHistory>;
   private cartSessions: Map<string, string>;
+  private orderSessions: Map<string, string[]>;
   private agentExecutor: AgentExecutor;
   private runnableWithHistory: RunnableWithMessageHistory<any, any>;
+  private currentSessionId: string;
 
   constructor(private readonly httpService: HttpService) {
     this.chatModel = new ChatOpenAI({
@@ -30,6 +32,7 @@ export class ChatService {
     });
     this.messageHistories = new Map();
     this.cartSessions = new Map();
+    this.orderSessions = new Map();
   }
 
   private getPizzasTool = tool(
@@ -312,6 +315,11 @@ export class ChatService {
           this.httpService.post('/api/orders', orderData),
         );
 
+        if (response.data.id) {
+          const sessionId = this.currentSessionId;
+          this.addOrderId(sessionId, response.data.id);
+        }
+
         return JSON.stringify({
           success: true,
           message: 'Order created successfully',
@@ -452,6 +460,17 @@ export class ChatService {
     return cartId;
   }
 
+  private addOrderId(sessionId: string, orderId: string): void {
+    const orders = this.orderSessions.get(sessionId) || [];
+    orders.push(orderId);
+    this.orderSessions.set(sessionId, orders);
+    console.log(`Added orderId ${orderId} for session ${sessionId}`);
+  }
+
+  private getOrderIds(sessionId: string): string[] {
+    return this.orderSessions.get(sessionId) || [];
+  }
+
   async onModuleInit() {
     const tools = [
       this.getPizzasTool,
@@ -486,15 +505,22 @@ export class ChatService {
              e. Use addItemToCart with the correct UUIDs
            - Always check tool responses for success/error status
            - If a tool returns an error, explain the issue to the user and suggest solutions
-        3. Format responses in a user-friendly way (don't show raw JSON)
-        4. Guide users through the ordering process step by step
-        5. Error handling:
+        3. For order operations:
+           - Store order IDs after successful order creation
+           - When user asks about order status:
+             a. Use the most recent order ID by default
+             b. If user asks about a specific order, verify it exists in their order history
+           - For order cancellation, verify the order belongs to the user's session
+        4. Format responses in a user-friendly way (don't show raw JSON)
+        5. Guide users through the ordering process step by step
+        6. Error handling:
            - Always check responses for errors
            - If an error occurs, explain the issue to the user and suggest solutions
            - Suggest alternatives or next steps when errors occur
            - Be empathetic when explaining errors
         
-        Current cart ID: {cartId}`,
+        Current cart ID: {cartId}
+        Available order IDs: {orderIds}`,
       ],
       new MessagesPlaceholder('chat_history'),
       ['human', '{input}'],
@@ -532,15 +558,23 @@ export class ChatService {
 
   async process(chatRequest: ChatRequestDto): Promise<any> {
     const { message, sessionId } = chatRequest;
+    this.currentSessionId = sessionId;
 
     try {
       const cartId = this.getCartId(sessionId);
-      console.log('Starting process with cartId:', cartId);
+      const orderIds = this.getOrderIds(sessionId);
+      console.log(
+        'Starting process with cartId:',
+        cartId,
+        'orderIds:',
+        orderIds,
+      );
 
       const response = await this.runnableWithHistory.invoke(
         {
           input: message,
           cartId,
+          orderIds,
         },
         {
           configurable: { sessionId },
@@ -587,15 +621,10 @@ export class ChatService {
         message: response.output,
         sessionId,
         cartId: finalCartId,
+        orderIds: this.getOrderIds(sessionId),
       };
-    } catch (error) {
-      console.error('Error processing chat request:', error);
-      return {
-        message:
-          "I'm sorry, I encountered an error processing your request. Could you please try again?",
-        sessionId,
-        cartId: this.getCartId(sessionId),
-      };
+    } finally {
+      this.currentSessionId = undefined;
     }
   }
 
@@ -604,5 +633,6 @@ export class ChatService {
     await history.clear();
     this.messageHistories.delete(sessionId);
     this.cartSessions.delete(sessionId);
+    this.orderSessions.delete(sessionId);
   }
 }
